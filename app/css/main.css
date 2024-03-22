@@ -1,0 +1,40 @@
+.navbar {
+    margin-bottom: 1rem;
+}
+.logo {
+    font-size: 24px;
+    font-weight: bold;
+    color: white;
+    margin-right: 20px;
+}
+
+
+.footer {
+    background-color: #f8f9fa;
+    padding: 20px 0;
+    text-align: center;
+    position: fixed;
+    width: 100%;
+    bottom: 0;
+}
+
+.projectbox {
+    border: 1px solid lightgrey;
+    padding: 1rem;
+    margin: 0;
+}
+.projectbox:hover {
+    background-color: rgb(233, 233, 233);
+    border-color:black;
+}
+.projectbox .projectleft .projectbuttons {
+    padding: .5rem 0;
+}
+.projectbox .projectright {
+    text-align: right;
+}
+
+
+.projectform .form-group {
+    padding: .5rem 0;
+}

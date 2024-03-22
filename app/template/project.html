@@ -1,0 +1,30 @@
+<div class="container">    
+    <h3>Szerkesztés / Létrehozás</h3>
+    <form class="projectform" method="post" action="">
+      <div class="form-group">
+        <label for="project_name">Név</label>
+        <input type="text" class="form-control" id="project_name" value="%%project_name%%" name="project_name" placeholder="Projekt neve" required>
+      </div>
+      <div class="form-group">
+        <label for="project_desc">Leírás</label>
+        <textarea class="form-control" id="project_desc" name="project_desc" placeholder="Projekt leírása" required>%%project_desc%%</textarea>
+      </div>
+      <div class="form-group">
+        <label for="project_status">Státusz</label>
+        <select class="form-control" id="project_status" name="project_status">
+          <option value="1" %%project_status-1%%>Fejlesztésre vár</option>
+          <option value="2" %%project_status-2%%>Folyamatban</option>
+          <option value="3" %%project_status-3%%>Kész</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label for="owner_name">Kapcsolattartó neve</label>
+        <input type="text" class="form-control" id="owner_name" value="%%owner_name%%" name="owner_name" placeholder="Kapcsolattartó neve" required>
+      </div>
+      <div class="form-group">
+        <label for="owner_email">Kapcsolattartó email címe</label>
+        <input type="email" class="form-control" id="owner_email" value="%%owner_email%%" name="owner_email" placeholder="Kapcsolattartó email címe" required>
+      </div>
+      <button type="submit" class="btn btn-primary">Mentés</button>
+    </form>
+  </div>

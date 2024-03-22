@@ -1,0 +1,18 @@
+version: '3'
+
+services:
+  pamutlabor:
+    build:
+      context: .
+      dockerfile: ./Dockerfile
+    container_name: pamutlabor
+    ports:
+      - "8085:80"
+    volumes:
+      - /home/imre/Dokumentumok/pamtulabor/probafeladat/pamutprojects:/var/www/html
+    networks:
+      - laptop
+
+networks:
+  laptop:
+    driver: bridge
