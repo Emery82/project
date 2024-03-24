@@ -201,7 +201,7 @@ class Project
 
     public function listProjects($params)
     {
-        global $projectarrays;
+        global $config, $projectarrays;
 
         $projects = $this->getProjects("all", $params);
 
@@ -228,7 +228,26 @@ class Project
                 </div>
             ';
 
-        foreach ($projects as $project) {
+        // Paginate
+
+        $page = isset($_GET['page']) ? $_GET['page'] : 1;
+        $limit = $config['projectsperpage'];
+        $offset = ($page - 1) * $limit;
+
+        $totalPages = ceil(count($projects) / $limit);
+        $currentPage = min($page, $totalPages);
+
+        $pagination = "";
+        if ($totalPages != 1) {
+            $pagination .= '<ul class="pagination">';
+            for ($i = 1; $i <= $totalPages; $i++) {
+                $active = $i == $currentPage ? 'active' : '';
+                $pagination .= '<li class="page-item ' . $active . '"><a class="page-link" href="?page=' . $i . '">' . $i . '</a></li>';
+            }
+            $pagination .= '</ul>';
+        }
+
+        foreach (array_slice($projects, $offset, $limit) as $project) {
             $projectList_html .= '
                     <div class="projectbox" id="project-' . $project['project_id'] . '">
                         <div class="row">
@@ -237,7 +256,7 @@ class Project
                                 <small class="projectowner">' . $project['owner_name'] . ' (' . $project['owner_email'] . ')</small>
                                 <div class="projectbuttons">
                                     <a href="/?projectedit=' . $project['project_id'] . '" class="btn btn-primary">Szerkesztés</a>
-                                    <a href="/?projectdel=' . $project['project_id'] . '" class="btn btn-danger">Törlés</a>
+                                    <!-- a href="/?projectdel=' . $project['project_id'] . '" class="btn btn-danger">Törlés</a -->
                                     <a href="javascript:void(0);" onclick="deleteProject(' . $project['project_id'] . ')" class="btn btn-danger">Törlés</a>
 
                                 </div>
@@ -249,7 +268,7 @@ class Project
                         </div>
                     </div>';
         }
-        echo $projectList_html;
+        echo $projectList_html . $pagination;
     }
 
     public function delProjects($projectId)
@@ -336,7 +355,7 @@ class Project
         if ($projectdel) {
             $response = array(
                 'success' => true,
-                'message' => 'A <strong>' . $projectDetails[0]['project_title'] . '</strong> projekt törlésre került!'
+                'message' => 'A ' . $projectDetails[0]['project_title'] . ' projekt törlésre került!'
             );
         } else {
             $response = array(
@@ -348,5 +367,4 @@ class Project
         echo json_encode($response);
         exit;
     }
-
 }

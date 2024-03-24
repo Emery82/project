@@ -6,7 +6,8 @@ $config = array(
         "dbuser" => "pamutlabor",
         "dbpass" => "pamutlabor",
     ),
-    "sendmail" => false
+    "sendmail" => false,
+    "projectsperpage" => 10
 );
 
 

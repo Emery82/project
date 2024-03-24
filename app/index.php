@@ -12,7 +12,7 @@ if ($conn->connect_error) {
 $project = new Project($conn);
 
 // If Ajax projectdel
-if(isset($_GET['delProjectsAjax'])) {
+if (isset($_GET['delProjectsAjax'])) {
     $project->delProjectsAjax($_GET['delProjectsAjax']);
 }
 
@@ -26,7 +26,6 @@ if (isset($_GET['project']) && $_GET['project'] == "new") {
     $project->editProjects($_GET['projectedit']);
 } elseif (isset($_GET['projectdel']) && is_numeric($_GET['projectdel'])) {
     $project->delProjects($_GET['projectdel']);
-
 } else {
     $params = array();
     if (isset($_GET['listStatus']) && is_numeric($_GET['listStatus'])) {
