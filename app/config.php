@@ -5,5 +5,6 @@ $config = array(
         "dbname" => "pamutlabor",
         "dbuser" => "pamutlabor",
         "dbpass" => "pamutlabor",
-    )    
+    ),
+    "sendmail" => false
 );

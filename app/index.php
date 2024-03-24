@@ -13,24 +13,20 @@ require_once('template/header.html');
 
 $project = new Project($conn);
 
-if(isset($_GET['project']) && $_GET['project']=="new"){    
+if (isset($_GET['project']) && $_GET['project'] == "new") {
     $project->newProjects();
-}
-elseif(isset($_GET['projectedit']) && is_numeric($_GET['projectedit'])){    
+} elseif (isset($_GET['projectedit']) && is_numeric($_GET['projectedit'])) {
     $project->editProjects($_GET['projectedit']);
-}
-elseif(isset($_GET['projectdel']) && is_numeric($_GET['projectdel'])){    
+} elseif (isset($_GET['projectdel']) && is_numeric($_GET['projectdel'])) {
     $project->delProjects($_GET['projectdel']);
-}    
-else {    
-    $params=array();
-    if(isset($_GET['listStatus']) && is_numeric($_GET['listStatus'])){
+} else {
+    $params = array();
+    if (isset($_GET['listStatus']) && is_numeric($_GET['listStatus'])) {
         $params['qstatus'] = $_GET['listStatus'];
-    }   
-    $project->listProjects($params);    
+    }
+    $project->listProjects($params);
 }
 
 $conn->close();
 
 require_once('template/footer.html');
-?>

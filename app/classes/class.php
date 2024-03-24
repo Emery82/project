@@ -65,8 +65,6 @@ class Project
         return $projects;
     }
 
-
-
     private function saveProject($title, $description, $ownerId, $statusId)
     {
         $sql = "INSERT INTO projects (title, description) VALUES ('$title', '$description')";
@@ -86,6 +84,9 @@ class Project
 
     private function updateProject($projectId, $title, $description, $ownerId, $statusId)
     {
+        // Previous project details
+        $prev = $this->getProjects($projectId);
+
         $sql = "UPDATE projects SET title = '$title', description = '$description' WHERE id = $projectId";
         $this->conn->query($sql);
 
@@ -98,6 +99,11 @@ class Project
         $this->conn->query($sql);
 
         echo '<div class="alert alert-success" role="alert">A <strong>' . $title . '</strong> projekt sikeresen frissítve!</div>';
+
+        // Project details now
+        $now = $this->getProjects($projectId);
+
+        $this->notifyChanges($prev[0], $now[0]);
     }
 
     private function deleteProject($projectId)
@@ -144,6 +150,57 @@ class Project
             return $this->conn->insert_id;
         } else {
             return null;
+        }
+    }
+
+    private function notifyChanges($prev = array(), $now = array())
+    {
+        $texts = array(
+            "project_title" => "Név",
+            "project_description" => "Leírás",
+            "owner_name" => "Kapcsolattartó neve",
+            "owner_email" => "Kapcsolattartó email címe",
+            "status_name" => "Státusz"
+        );
+
+        $diff = array_diff_assoc($now, $prev);
+        if ($diff) {
+            global $config;
+
+            $emailbody = "\nKedves " . $prev['owner_name'] . "!\nA Projekt adataiban változások történtek!\n";
+            $emailbody .= "Projekt neve: " . $prev['project_title'] . "\n\nVáltozások:\n";
+
+            foreach ($diff as $key => $value) {
+                if ($texts[$key]) $emailbody .= "" . $texts[$key] . ": " . $value . "\n";
+            }
+
+            $emailbody .= "\nÜdvözlettel:\nProject Handler";
+            if ($config['sendmail']) {
+                // Recipient
+                $to = $prev['owner_email'];
+
+                // Subject
+                $subject = '=?UTF-8?B?' . base64_encode('[Project Handler]] Módosítások történtek egy projekt adataiban') . '?=';
+
+                // Message
+                $message = $emailbody;
+
+                // Headers
+                $headers = "From: noreply@projecthandler.org\r\n";
+                $headers .= "Reply-To: noreply@\r\n";
+                $headers .= "MIME-Version: 1.0\r\n";
+                $headers .= "Content-type: text/plain; charset=UTF-8\r\n";
+
+                // Send email
+                if (mail($to, $subject, $message, $headers)) {
+                    return true;
+                } else {
+                    return false;
+                }
+            } else {
+                echo "<p><strong>A következő email kerülne kiküldésre a kapcsolattartó számára, ha az email küldés engedélyezve van a config.php-ben és a mail fv. engedélyezve van.</strong></p>";
+                echo '<code>' . nl2br($emailbody) . '</code>';
+            }
         }
     }
 
