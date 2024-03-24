@@ -155,13 +155,8 @@ class Project
 
     private function notifyChanges($prev = array(), $now = array())
     {
-        $texts = array(
-            "project_title" => "Név",
-            "project_description" => "Leírás",
-            "owner_name" => "Kapcsolattartó neve",
-            "owner_email" => "Kapcsolattartó email címe",
-            "status_name" => "Státusz"
-        );
+        global $projectarrays;
+        $texts = $projectarrays['formNames'];
 
         $diff = array_diff_assoc($now, $prev);
         if ($diff) {
@@ -206,14 +201,11 @@ class Project
 
     public function listProjects($params)
     {
+        global $projectarrays;
 
         $projects = $this->getProjects("all", $params);
 
-        $projectStatuses = array(
-            1 => "Fejlesztésre vár",
-            2 => "Folyamatban",
-            3 => "Kész",
-        );
+        $projectStatuses = $projectarrays['projectStatuses'];
 
         // List projects
         $projectList_html = '
@@ -221,8 +213,8 @@ class Project
                     <div class="col-md-6">
                         <h3>Projektek</h3>
                     </div>
-                    <div class="col-md-6 text-right">                                
-                        <form method="get" action="" class="form-control  text-right">
+                    <div class="col-md-6">                                
+                        <form method="get" action="" class="form-control">
                         <select name="listStatus">
                             <option value="">Szűrés státuszra</option>';
         foreach ($projectStatuses as $key => $value) {
@@ -238,7 +230,7 @@ class Project
 
         foreach ($projects as $project) {
             $projectList_html .= '
-                    <div class="projectbox">
+                    <div class="projectbox" id="project-' . $project['project_id'] . '">
                         <div class="row">
                             <div class="projectleft col-md-8"> 
                                 <h4>' . $project['project_title'] . '</h4>
@@ -246,6 +238,8 @@ class Project
                                 <div class="projectbuttons">
                                     <a href="/?projectedit=' . $project['project_id'] . '" class="btn btn-primary">Szerkesztés</a>
                                     <a href="/?projectdel=' . $project['project_id'] . '" class="btn btn-danger">Törlés</a>
+                                    <a href="javascript:void(0);" onclick="deleteProject(' . $project['project_id'] . ')" class="btn btn-danger">Törlés</a>
+
                                 </div>
                             </div>
                             <div class="projectright col-md-4">
@@ -334,4 +328,25 @@ class Project
             echo $template;
         }
     }
+
+    public function delProjectsAjax($projectId)
+    {
+        $projectDetails = $this->getProjects($projectId);
+        $projectdel = $this->deleteProject($projectId);
+        if ($projectdel) {
+            $response = array(
+                'success' => true,
+                'message' => 'A <strong>' . $projectDetails[0]['project_title'] . '</strong> projekt törlésre került!'
+            );
+        } else {
+            $response = array(
+                'success' => false,
+                'message' => 'A törlés sikertelen volt!'
+            );
+        }
+        header('Content-Type: application/json');
+        echo json_encode($response);
+        exit;
+    }
+
 }
