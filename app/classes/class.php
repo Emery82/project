@@ -10,9 +10,7 @@ class Project
 
     private function getProjects($projectId = null, $params = array())
     {
-
         $projects = array();
-
         $sql = "SELECT 
                     projects.id AS project_id,
                     projects.title AS project_title,
@@ -31,22 +29,38 @@ class Project
                 JOIN 
                     project_status_pivot ON projects.id = project_status_pivot.project_id
                 JOIN 
-                    statuses ON project_status_pivot.status_id = statuses.id";
+                    statuses ON project_status_pivot.status_id = statuses.id
+                WHERE 1";
 
-        $sql .= " WHERE 1 ";
         if ($projectId !== null && is_numeric($projectId)) {
-            $sql .= " AND projects.id = " . $projectId . " ";
+            $sql .= " AND projects.id = ?";
         }
 
         if (array_key_exists('qstatus', $params)) {
-            $sql .= " AND statuses.id = " . $params['qstatus'] . " ";
+            $sql .= " AND statuses.id = ?";
         }
 
-        $sql .= " ORDER BY projects.id DESC ";
+        $sql .= " ORDER BY projects.id DESC";
 
-        $result = $this->conn->query($sql);
+        $stmt = $this->conn->prepare($sql);
 
-        if ($result && $result->num_rows > 0) {
+        if ($stmt === false) {
+            // Handle error
+            return $projects;
+        }
+
+        if ($projectId !== null && is_numeric($projectId)) {
+            $stmt->bind_param("i", $projectId);
+        }
+
+        if (array_key_exists('qstatus', $params)) {
+            $stmt->bind_param("i", $params['qstatus']);
+        }
+
+        $stmt->execute();
+        $result = $stmt->get_result();
+
+        if ($result) {
             while ($row = $result->fetch_assoc()) {
                 $project = array(
                     'project_id' => $row['project_id'],
@@ -67,17 +81,46 @@ class Project
 
     private function saveProject($title, $description, $ownerId, $statusId)
     {
-        $sql = "INSERT INTO projects (title, description) VALUES ('$title', '$description')";
-        $this->conn->query($sql);
-        $projectId = $this->conn->insert_id;
+        $sql = "INSERT INTO projects (title, description) VALUES (?, ?)";
+        $stmt = $this->conn->prepare($sql);
+        if ($stmt === false) {
+            // Handle error
+            return false;
+        }
+
+        $stmt->bind_param("ss", $title, $description);
+        $stmt->execute();
+        $projectId = $stmt->insert_id;
+        $stmt->close();
+
+        if ($projectId === false) {
+            // Handle error
+            return false;
+        }
 
         // Insert into project_owner_pivot
-        $sql = "INSERT INTO project_owner_pivot (project_id, owner_id) VALUES ($projectId, $ownerId)";
-        $this->conn->query($sql);
+        $sql = "INSERT INTO project_owner_pivot (project_id, owner_id) VALUES (?, ?)";
+        $stmt = $this->conn->prepare($sql);
+        if ($stmt === false) {
+            // Handle error
+            return false;
+        }
+
+        $stmt->bind_param("ii", $projectId, $ownerId);
+        $stmt->execute();
+        $stmt->close();
 
         // Insert into project_status_pivot
-        $sql = "INSERT INTO project_status_pivot (project_id, status_id) VALUES ($projectId, $statusId)";
-        $this->conn->query($sql);
+        $sql = "INSERT INTO project_status_pivot (project_id, status_id) VALUES (?, ?)";
+        $stmt = $this->conn->prepare($sql);
+        if ($stmt === false) {
+            // Handle error
+            return false;
+        }
+
+        $stmt->bind_param("ii", $projectId, $statusId);
+        $stmt->execute();
+        $stmt->close();
 
         return $projectId;
     }
@@ -87,45 +130,88 @@ class Project
         // Previous project details
         $prev = $this->getProjects($projectId);
 
-        $sql = "UPDATE projects SET title = '$title', description = '$description' WHERE id = $projectId";
-        $this->conn->query($sql);
+        $sql = "UPDATE projects SET title = ?, description = ? WHERE id = ?";
+        $stmt = $this->conn->prepare($sql);
+        if ($stmt === false) {
+            // Handle error
+            return false;
+        }
+
+        $stmt->bind_param("ssi", $title, $description, $projectId);
+        $stmt->execute();
+        $stmt->close();
 
         // Update project_owner_pivot
-        $sql = "UPDATE project_owner_pivot SET owner_id = $ownerId WHERE project_id = $projectId";
-        $this->conn->query($sql);
+        $sql = "UPDATE project_owner_pivot SET owner_id = ? WHERE project_id = ?";
+        $stmt = $this->conn->prepare($sql);
+        if ($stmt === false) {
+            // Handle error
+            return false;
+        }
+
+        $stmt->bind_param("ii", $ownerId, $projectId);
+        $stmt->execute();
+        $stmt->close();
 
         // Update project_status_pivot
-        $sql = "UPDATE project_status_pivot SET status_id = $statusId WHERE project_id = $projectId";
-        $this->conn->query($sql);
+        $sql = "UPDATE project_status_pivot SET status_id = ? WHERE project_id = ?";
+        $stmt = $this->conn->prepare($sql);
+        if ($stmt === false) {
+            // Handle error
+            return false;
+        }
 
-        echo '<div class="alert alert-success" role="alert">A <strong>' . $title . '</strong> projekt sikeresen frissítve!</div>';
+        $stmt->bind_param("ii", $statusId, $projectId);
+        $stmt->execute();
+        $stmt->close();
 
         // Project details now
         $now = $this->getProjects($projectId);
 
         $this->notifyChanges($prev[0], $now[0]);
+
+        return true;
     }
 
     private function deleteProject($projectId)
     {
         // Delete from project_owner_pivot
-        $sqlOwner = "DELETE FROM project_owner_pivot WHERE project_id = $projectId";
-        $resultOwner = $this->conn->query($sqlOwner);
-
-        // Delete from project_status_pivot
-        $sqlStatus = "DELETE FROM project_status_pivot WHERE project_id = $projectId";
-        $resultStatus = $this->conn->query($sqlStatus);
-
-        // Delete from projects
-        $sqlProject = "DELETE FROM projects WHERE id = $projectId";
-        $resultProject = $this->conn->query($sqlProject);
-
-        // Check if all deletions were successful
-        if ($resultOwner && $resultStatus && $resultProject) {
-            return true;
-        } else {
+        $sqlOwner = "DELETE FROM project_owner_pivot WHERE project_id = ?";
+        $stmtOwner = $this->conn->prepare($sqlOwner);
+        if ($stmtOwner === false) {
+            // Handle error
             return false;
         }
+
+        $stmtOwner->bind_param("i", $projectId);
+        $stmtOwner->execute();
+        $stmtOwner->close();
+
+        // Delete from project_status_pivot
+        $sqlStatus = "DELETE FROM project_status_pivot WHERE project_id = ?";
+        $stmtStatus = $this->conn->prepare($sqlStatus);
+        if ($stmtStatus === false) {
+            // Handle error
+            return false;
+        }
+
+        $stmtStatus->bind_param("i", $projectId);
+        $stmtStatus->execute();
+        $stmtStatus->close();
+
+        // Delete from projects
+        $sqlProject = "DELETE FROM projects WHERE id = ?";
+        $stmtProject = $this->conn->prepare($sqlProject);
+        if ($stmtProject === false) {
+            // Handle error
+            return false;
+        }
+
+        $stmtProject->bind_param("i", $projectId);
+        $stmtProject->execute();
+        $stmtProject->close();
+
+        return true;
     }
 
     private function getOwnerIdByEmail($email)

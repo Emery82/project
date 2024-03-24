@@ -19,6 +19,7 @@ $projectarrays = array(
     ),
     "formNames" => array(
         "status_id" => "",
+        "owner_id" => "",
         "project_title" => "Név",
         "project_description" => "Leírás",
         "owner_name" => "Kapcsolattartó neve",
