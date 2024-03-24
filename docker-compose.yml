@@ -9,7 +9,7 @@ services:
     ports:
       - "8085:80"
     volumes:
-      - /home/imre/Dokumentumok/pamtulabor/probafeladat/pamutprojects:/var/www/html
+      - /home/imre/pamtulabor/probafeladat/project:/var/www/html
     networks:
       - laptop
 
