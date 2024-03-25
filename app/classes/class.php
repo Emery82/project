@@ -296,10 +296,11 @@ class Project
         // List projects
         $projectList_html = '
                 <div class="row">
-                    <div class="col-md-6">
+                    <div class="col-md-12">
                         <h3>Projektek</h3>
                     </div>
-                    <div class="col-md-6">                                
+                    <div class="col-md-12">                                
+                        
                         <form method="get" action="" class="form-control">
                         <select name="listStatus">
                             <option value="">Szűrés státuszra</option>';
@@ -316,7 +317,7 @@ class Project
 
         // Paginate
 
-        $page = isset($_GET['page']) ? $_GET['page'] : 1;
+        $page = isset($params['page']) ? $params['page'] : 1;
         $limit = $config['projectsperpage'];
         $offset = ($page - 1) * $limit;
 
@@ -332,7 +333,7 @@ class Project
             }
             $pagination .= '</ul>';
         }
-
+        $projectList_html .= '<div id="formmessage"></div>';
         foreach (array_slice($projects, $offset, $limit) as $project) {
             $projectList_html .= '
                     <div class="projectbox" id="project-' . $project['project_id'] . '">
@@ -364,46 +365,15 @@ class Project
         if ($projectdel) echo '<div class="alert alert-success" role="alert">A <strong>' . $projectDetails[0]['project_title'] . '</strong> projekt törlésre került!</div>';
     }
 
-    public function newProjects()
+    public function manageProject($projectId = null)
     {
-        if (isset($_POST["project_name"])) {
-            $projectName = $_POST["project_name"];
-            $projectDesc = $_POST["project_desc"];
-            $projectStatus = $_POST["project_status"];
-            $ownerName = $_POST["owner_name"];
-            $ownerEmail = $_POST["owner_email"];
-
-            //Check if owner exists or create new one
-            if ($this->getOwnerIdByEmail($ownerEmail)) {
-                $ownerId = $this->getOwnerIdByEmail($ownerEmail);
-            } else {
-                $ownerId = $this->saveOwner($ownerName, $ownerEmail);
-            }
-
-            $projectsave = $this->saveProject($projectName, $projectDesc, $ownerId, $projectStatus);
-            if ($projectsave) echo '<div class="alert alert-success" role="alert">A <strong>' . $projectName . '</strong> projekt sikeresen mentve!</div>';
-        } else {
-            $currvals = array(
-                "%%project_name%%" => "",
-                "%%project_desc%%" => "",
-                "%%owner_name%%" => "",
-                "%%owner_email%%" => "",
-                "%%project_status-1%%" => "",
-                "%%project_status-2%%" => "",
-                "%%project_status-3%%" => ""
-            );
-            $pattern = '/%%(.*?)%%/';
-            $replacement = '';
-            $template = file_get_contents('template/project.html');
-            $template = preg_replace($pattern, $replacement, $template);
-            echo $template;
+        if ($projectId !== null) {
+            // Editing existing project
+            $projectDetails = $this->getProjects($projectId);
         }
-    }
 
-    public function editProjects($projectId)
-    {
-        $projectDetails = $this->getProjects($projectId);
         if (isset($_POST["project_name"])) {
+            // Form submitted, handle project creation or update
             $projectName = $_POST["project_name"];
             $projectDesc = $_POST["project_desc"];
             $projectStatus = $_POST["project_status"];
@@ -416,17 +386,29 @@ class Project
                 $ownerId = $this->saveOwner($ownerName, $ownerEmail);
             }
 
-            $projectsave = $this->updateProject($projectDetails[0]['project_id'], $projectName, $projectDesc, $ownerId, $projectStatus);
-            if ($projectsave) echo '<div class="alert alert-success" role="alert">A <strong>' . $projectName . '</strong> projekt sikeresen mentve!</div>';
+            if ($projectId !== null) {
+                // Editing existing project
+                $projectSave = $this->updateProject($projectId, $projectName, $projectDesc, $ownerId, $projectStatus);
+                $messagePrefix = "szerkesztett";
+            } else {
+                // Creating new project
+                $projectSave = $this->saveProject($projectName, $projectDesc, $ownerId, $projectStatus);
+                $messagePrefix = "létrehozott";
+            }
+
+            if ($projectSave) {
+                echo '<div class="alert alert-success" role="alert">A <strong>' . $projectName . '</strong> projekt sikeresen ' . $messagePrefix . '!</div>';
+            }
         } else {
+            // Display form
             $currvals = array(
-                "%%project_name%%" => $projectDetails[0]['project_title'],
-                "%%project_desc%%" => $projectDetails[0]['project_description'],
-                "%%owner_name%%" => $projectDetails[0]['owner_name'],
-                "%%owner_email%%" => $projectDetails[0]['owner_email'],
-                "%%project_status-1%%" => ($projectDetails[0]['status_id'] == 1 ? ' selected ' : ''),
-                "%%project_status-2%%" => ($projectDetails[0]['status_id'] == 2 ? ' selected ' : ''),
-                "%%project_status-3%%" => ($projectDetails[0]['status_id'] == 3 ? ' selected ' : '')
+                "%%project_name%%" => isset($projectDetails) ? $projectDetails[0]['project_title'] : "",
+                "%%project_desc%%" => isset($projectDetails) ? $projectDetails[0]['project_description'] : "",
+                "%%owner_name%%" => isset($projectDetails) ? $projectDetails[0]['owner_name'] : "",
+                "%%owner_email%%" => isset($projectDetails) ? $projectDetails[0]['owner_email'] : "",
+                "%%project_status-1%%" => (isset($projectDetails) && $projectDetails[0]['status_id'] == 1) ? ' selected ' : '',
+                "%%project_status-2%%" => (isset($projectDetails) && $projectDetails[0]['status_id'] == 2) ? ' selected ' : '',
+                "%%project_status-3%%" => (isset($projectDetails) && $projectDetails[0]['status_id'] == 3) ? ' selected ' : ''
             );
             $template = file_get_contents('template/project.html');
             $template = str_replace(array_keys($currvals), array_values($currvals), $template);
@@ -441,12 +423,12 @@ class Project
         if ($projectdel) {
             $response = array(
                 'success' => true,
-                'message' => 'A ' . $projectDetails[0]['project_title'] . ' projekt törlésre került!'
+                'message' => '<div class="alert alert-success" role="alert">A projekt törlése sikeres!</div>'
             );
         } else {
             $response = array(
                 'success' => false,
-                'message' => 'A törlés sikertelen volt!'
+                'message' => '<div class="alert alert-danger" role="alert">A projekt törlése sikertelen!</div>'
             );
         }
         header('Content-Type: application/json');

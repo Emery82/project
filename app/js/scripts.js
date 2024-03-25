@@ -6,9 +6,11 @@ function deleteProject(projectId) {
                 var response = JSON.parse(this.responseText);
                 if (response.success) {
                     document.getElementById('project-' + projectId).remove();
-                    alert(response.message);
+                    document.getElementById('formmessage').innerHTML = response.message;
+                    //alert(response.message);
                 } else {
-                    alert(response.message);
+                    document.getElementById('formmessage').innerHTML = response.message;
+                    //alert(response.message);
                 }
             }
         };
