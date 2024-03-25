@@ -18,18 +18,22 @@ if (isset($_GET['delProjectsAjax'])) {
 
 require_once('template/header.html');
 
-
-
 if (isset($_GET['project']) && $_GET['project'] == "new") {
-    $project->newProjects();
+    $project->manageProject();
+
 } elseif (isset($_GET['projectedit']) && is_numeric($_GET['projectedit'])) {
-    $project->editProjects($_GET['projectedit']);
+    $project->manageProject($_GET['projectedit']);
+
 } elseif (isset($_GET['projectdel']) && is_numeric($_GET['projectdel'])) {
     $project->delProjects($_GET['projectdel']);
+
 } else {
     $params = array();
     if (isset($_GET['listStatus']) && is_numeric($_GET['listStatus'])) {
         $params['qstatus'] = $_GET['listStatus'];
+    }
+    if(isset($_GET['page']) && is_numeric($_GET['page'])){
+        $params['page'] = $_GET['page'];
     }
     $project->listProjects($params);
 }
