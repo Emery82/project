@@ -397,7 +397,7 @@ class Project
             }
 
             if ($projectSave) {
-                echo '<div class="alert alert-success" role="alert">A <strong>' . $projectName . '</strong> projekt sikeresen ' . $messagePrefix . '!</div>';
+                echo '<div class="alert alert-success" role="alert">A(z) <strong>' . $projectName . '</strong> projekt sikeresen ' . $messagePrefix . '!</div>';
             }
         } else {
             // Display form
