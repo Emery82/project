@@ -417,8 +417,7 @@ class Project
     }
 
     public function delProjectsAjax($projectId)
-    {
-        $projectDetails = $this->getProjects($projectId);
+    {        
         $projectdel = $this->deleteProject($projectId);
         if ($projectdel) {
             $response = array(
