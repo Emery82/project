@@ -389,11 +389,11 @@ class Project
             if ($projectId !== null) {
                 // Editing existing project
                 $projectSave = $this->updateProject($projectId, $projectName, $projectDesc, $ownerId, $projectStatus);
-                $messagePrefix = "szerkesztett";
+                $messagePrefix = "szerkesztve";
             } else {
                 // Creating new project
                 $projectSave = $this->saveProject($projectName, $projectDesc, $ownerId, $projectStatus);
-                $messagePrefix = "létrehozott";
+                $messagePrefix = "létrehozva";
             }
 
             if ($projectSave) {
