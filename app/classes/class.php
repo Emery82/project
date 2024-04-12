@@ -1,4 +1,5 @@
 <?php
+
 class Project
 {
     private $conn;
@@ -218,8 +219,16 @@ class Project
     {
         $ownerId = null;
 
-        $sql = "SELECT id FROM owners WHERE email = '$email'";
-        $result = $this->conn->query($sql);
+        $sql = "SELECT id FROM owners WHERE email = ?";
+        $stmt = $this->conn->prepare($sql);
+        if ($stmt === false) {
+            // Handle error
+            return null;
+        }
+
+        $stmt->bind_param("s", $email);
+        $stmt->execute();
+        $result = $stmt->get_result();
 
         if ($result && $result->num_rows > 0) {
             $row = $result->fetch_assoc();
@@ -231,12 +240,19 @@ class Project
 
     private function saveOwner($name, $email)
     {
-        $sql = "INSERT INTO owners (name, email) VALUES ('$name', '$email')";
-        if ($this->conn->query($sql) === TRUE) {
-            return $this->conn->insert_id;
-        } else {
+        $sql = "INSERT INTO owners (name, email) VALUES (?, ?)";
+        $stmt = $this->conn->prepare($sql);
+        if ($stmt === false) {
+            // Handle error
             return null;
         }
+
+        $stmt->bind_param("ss", $name, $email);
+        $stmt->execute();
+        $ownerId = $stmt->insert_id;
+        $stmt->close();
+
+        return $ownerId;
     }
 
     private function notifyChanges($prev = array(), $now = array())
@@ -248,11 +264,11 @@ class Project
         if ($diff) {
             global $config;
 
-            $emailbody = "\nKedves " . $prev['owner_name'] . "!\nA Projekt adataiban változások történtek!\n";
-            $emailbody .= "Projekt neve: " . $prev['project_title'] . "\n\nVáltozások:\n";
+            $emailbody = "\nKedves " . htmlspecialchars($prev['owner_name'], ENT_QUOTES, 'UTF-8') . "!\nA Projekt adataiban változások történtek!\n";
+            $emailbody .= "Projekt neve: " . htmlspecialchars($prev['project_title'], ENT_QUOTES, 'UTF-8') . "\n\nVáltozások:\n";
 
             foreach ($diff as $key => $value) {
-                if ($texts[$key]) $emailbody .= "" . $texts[$key] . ": " . $value . "\n";
+                if ($texts[$key]) $emailbody .= "" . $texts[$key] . ": " . htmlspecialchars($value, ENT_QUOTES, 'UTF-8') . "\n";
             }
 
             $emailbody .= "\nÜdvözlettel:\nProject Handler";
@@ -305,7 +321,7 @@ class Project
                         <select name="listStatus">
                             <option value="">Szűrés státuszra</option>';
         foreach ($projectStatuses as $key => $value) {
-            $projectList_html .= '<option value="' . $key . '" ' . (isset($params['qstatus']) && $params['qstatus'] == $key ? " selected " : "") . '>' . $value . '</option>';
+            $projectList_html .= '<option value="' . $key . '" ' . (isset($params['qstatus']) && $params['qstatus'] == $key ? " selected " : "") . '>' . htmlspecialchars($value, ENT_QUOTES, 'UTF-8') . '</option>';
         }
 
         $projectList_html .= '</select>
@@ -339,8 +355,8 @@ class Project
                     <div class="projectbox" id="project-' . $project['project_id'] . '">
                         <div class="row">
                             <div class="projectleft col-md-8"> 
-                                <h4>' . $project['project_title'] . '</h4>
-                                <small class="projectowner">' . $project['owner_name'] . ' (' . $project['owner_email'] . ')</small>
+                                <h4>' . htmlspecialchars($project['project_title'], ENT_QUOTES, 'UTF-8') . '</h4>
+                                <small class="projectowner">' . htmlspecialchars($project['owner_name'], ENT_QUOTES, 'UTF-8') . ' (' . htmlspecialchars($project['owner_email'], ENT_QUOTES, 'UTF-8') . ')</small>
                                 <div class="projectbuttons">
                                     <a href="/?projectedit=' . $project['project_id'] . '" class="btn btn-primary">Szerkesztés</a>
                                     <!-- a href="/?projectdel=' . $project['project_id'] . '" class="btn btn-danger">Törlés</a -->
@@ -349,7 +365,7 @@ class Project
                                 </div>
                             </div>
                             <div class="projectright col-md-4">
-                                <small class="prjectstatus">' . $project['status_name'] . '</small>      
+                                <small class="prjectstatus">' . htmlspecialchars($project['status_name'], ENT_QUOTES, 'UTF-8') . '</small>      
                                 
                             </div>
                         </div>
@@ -362,7 +378,7 @@ class Project
     {
         $projectDetails = $this->getProjects($projectId);
         $projectdel = $this->deleteProject($projectId);
-        if ($projectdel) echo '<div class="alert alert-success" role="alert">A <strong>' . $projectDetails[0]['project_title'] . '</strong> projekt törlésre került!</div>';
+        if ($projectdel) echo '<div class="alert alert-success" role="alert">A <strong>' . htmlspecialchars($projectDetails[0]['project_title'], ENT_QUOTES, 'UTF-8') . '</strong> projekt törlésre került!</div>';
     }
 
     public function manageProject($projectId = null)
@@ -397,15 +413,15 @@ class Project
             }
 
             if ($projectSave) {
-                echo '<div class="alert alert-success" role="alert">A(z) <strong>' . $projectName . '</strong> projekt sikeresen ' . $messagePrefix . '!</div>';
+                echo '<div class="alert alert-success" role="alert">A(z) <strong>' . htmlspecialchars($projectName, ENT_QUOTES, 'UTF-8') . '</strong> projekt sikeresen ' . $messagePrefix . '!</div>';
             }
         } else {
             // Display form
             $currvals = array(
-                "%%project_name%%" => isset($projectDetails) ? $projectDetails[0]['project_title'] : "",
-                "%%project_desc%%" => isset($projectDetails) ? $projectDetails[0]['project_description'] : "",
-                "%%owner_name%%" => isset($projectDetails) ? $projectDetails[0]['owner_name'] : "",
-                "%%owner_email%%" => isset($projectDetails) ? $projectDetails[0]['owner_email'] : "",
+                "%%project_name%%" => isset($projectDetails) ? htmlspecialchars($projectDetails[0]['project_title'], ENT_QUOTES, 'UTF-8') : "",
+                "%%project_desc%%" => isset($projectDetails) ? htmlspecialchars($projectDetails[0]['project_description'], ENT_QUOTES, 'UTF-8') : "",
+                "%%owner_name%%" => isset($projectDetails) ? htmlspecialchars($projectDetails[0]['owner_name'], ENT_QUOTES, 'UTF-8') : "",
+                "%%owner_email%%" => isset($projectDetails) ? htmlspecialchars($projectDetails[0]['owner_email'], ENT_QUOTES, 'UTF-8') : "",
                 "%%project_status-1%%" => (isset($projectDetails) && $projectDetails[0]['status_id'] == 1) ? ' selected ' : '',
                 "%%project_status-2%%" => (isset($projectDetails) && $projectDetails[0]['status_id'] == 2) ? ' selected ' : '',
                 "%%project_status-3%%" => (isset($projectDetails) && $projectDetails[0]['status_id'] == 3) ? ' selected ' : ''
@@ -417,7 +433,7 @@ class Project
     }
 
     public function delProjectsAjax($projectId)
-    {        
+    {
         $projectdel = $this->deleteProject($projectId);
         if ($projectdel) {
             $response = array(
@@ -435,3 +451,6 @@ class Project
         exit;
     }
 }
+
+?>
+
