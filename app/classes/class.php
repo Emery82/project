@@ -9,9 +9,9 @@ class Project
         $this->conn = $conn;
     }
 
-    private function getProjects($projectId = null, $params = array())
+    private function getProjects($projectId = null, $params = [])
     {
-        $projects = array();
+        $projects = [];
         $sql = "SELECT 
                     projects.id AS project_id,
                     projects.title AS project_title,
@@ -46,7 +46,6 @@ class Project
         $stmt = $this->conn->prepare($sql);
 
         if ($stmt === false) {
-            // Handle error
             return $projects;
         }
 
@@ -63,7 +62,7 @@ class Project
 
         if ($result) {
             while ($row = $result->fetch_assoc()) {
-                $project = array(
+                $project = [
                     'project_id' => $row['project_id'],
                     'project_title' => $row['project_title'],
                     'project_description' => $row['project_description'],
@@ -72,7 +71,7 @@ class Project
                     'owner_email' => $row['owner_email'],
                     'status_id' => $row['status_id'],
                     'status_name' => $row['status_name']
-                );
+                ];
                 $projects[] = $project;
             }
         }
@@ -85,7 +84,6 @@ class Project
         $sql = "INSERT INTO projects (title, description) VALUES (?, ?)";
         $stmt = $this->conn->prepare($sql);
         if ($stmt === false) {
-            // Handle error
             return false;
         }
 
@@ -95,7 +93,6 @@ class Project
         $stmt->close();
 
         if ($projectId === false) {
-            // Handle error
             return false;
         }
 
@@ -103,7 +100,6 @@ class Project
         $sql = "INSERT INTO project_owner_pivot (project_id, owner_id) VALUES (?, ?)";
         $stmt = $this->conn->prepare($sql);
         if ($stmt === false) {
-            // Handle error
             return false;
         }
 
@@ -115,7 +111,6 @@ class Project
         $sql = "INSERT INTO project_status_pivot (project_id, status_id) VALUES (?, ?)";
         $stmt = $this->conn->prepare($sql);
         if ($stmt === false) {
-            // Handle error
             return false;
         }
 
@@ -134,7 +129,6 @@ class Project
         $sql = "UPDATE projects SET title = ?, description = ? WHERE id = ?";
         $stmt = $this->conn->prepare($sql);
         if ($stmt === false) {
-            // Handle error
             return false;
         }
 
@@ -146,7 +140,6 @@ class Project
         $sql = "UPDATE project_owner_pivot SET owner_id = ? WHERE project_id = ?";
         $stmt = $this->conn->prepare($sql);
         if ($stmt === false) {
-            // Handle error
             return false;
         }
 
@@ -158,7 +151,6 @@ class Project
         $sql = "UPDATE project_status_pivot SET status_id = ? WHERE project_id = ?";
         $stmt = $this->conn->prepare($sql);
         if ($stmt === false) {
-            // Handle error
             return false;
         }
 
@@ -176,11 +168,9 @@ class Project
 
     private function deleteProject($projectId)
     {
-        // Delete from project_owner_pivot
         $sqlOwner = "DELETE FROM project_owner_pivot WHERE project_id = ?";
         $stmtOwner = $this->conn->prepare($sqlOwner);
         if ($stmtOwner === false) {
-            // Handle error
             return false;
         }
 
@@ -188,11 +178,9 @@ class Project
         $stmtOwner->execute();
         $stmtOwner->close();
 
-        // Delete from project_status_pivot
         $sqlStatus = "DELETE FROM project_status_pivot WHERE project_id = ?";
         $stmtStatus = $this->conn->prepare($sqlStatus);
         if ($stmtStatus === false) {
-            // Handle error
             return false;
         }
 
@@ -200,11 +188,9 @@ class Project
         $stmtStatus->execute();
         $stmtStatus->close();
 
-        // Delete from projects
         $sqlProject = "DELETE FROM projects WHERE id = ?";
         $stmtProject = $this->conn->prepare($sqlProject);
         if ($stmtProject === false) {
-            // Handle error
             return false;
         }
 
@@ -222,7 +208,6 @@ class Project
         $sql = "SELECT id FROM owners WHERE email = ?";
         $stmt = $this->conn->prepare($sql);
         if ($stmt === false) {
-            // Handle error
             return null;
         }
 
@@ -243,7 +228,6 @@ class Project
         $sql = "INSERT INTO owners (name, email) VALUES (?, ?)";
         $stmt = $this->conn->prepare($sql);
         if ($stmt === false) {
-            // Handle error
             return null;
         }
 
@@ -255,15 +239,14 @@ class Project
         return $ownerId;
     }
 
-    private function notifyChanges($prev = array(), $now = array())
+    private function notifyChanges($prev = [], $now = [])
     {
-        global $projectarrays;
+        global $projectarrays, $config;
+
         $texts = $projectarrays['formNames'];
 
         $diff = array_diff_assoc($now, $prev);
         if ($diff) {
-            global $config;
-
             $emailbody = "\nKedves " . htmlspecialchars($prev['owner_name'], ENT_QUOTES, 'UTF-8') . "!\nA Projekt adataiban változások történtek!\n";
             $emailbody .= "Projekt neve: " . htmlspecialchars($prev['project_title'], ENT_QUOTES, 'UTF-8') . "\n\nVáltozások:\n";
 
@@ -273,22 +256,14 @@ class Project
 
             $emailbody .= "\nÜdvözlettel:\nProject Handler";
             if ($config['sendmail']) {
-                // Recipient
                 $to = $prev['owner_email'];
-
-                // Subject
-                $subject = '=?UTF-8?B?' . base64_encode('[Project Handler]] Módosítások történtek egy projekt adataiban') . '?=';
-
-                // Message
+                $subject = '=?UTF-8?B?' . base64_encode('[Project Handler]] Módosítások történtek egy projekt adataiban') . '?';
                 $message = $emailbody;
-
-                // Headers
                 $headers = "From: noreply@projecthandler.org\r\n";
                 $headers .= "Reply-To: noreply@\r\n";
                 $headers .= "MIME-Version: 1.0\r\n";
                 $headers .= "Content-type: text/plain; charset=UTF-8\r\n";
 
-                // Send email
                 if (mail($to, $subject, $message, $headers)) {
                     return true;
                 } else {
@@ -309,7 +284,6 @@ class Project
 
         $projectStatuses = $projectarrays['projectStatuses'];
 
-        // List projects
         $projectList_html = '
                 <div class="row">
                     <div class="col-md-12">
@@ -330,8 +304,6 @@ class Project
                     </div>
                 </div>
             ';
-
-        // Paginate
 
         $page = isset($params['page']) ? $params['page'] : 1;
         $limit = $config['projectsperpage'];
@@ -389,7 +361,6 @@ class Project
         }
 
         if (isset($_POST["project_name"])) {
-            // Form submitted, handle project creation or update
             $projectName = $_POST["project_name"];
             $projectDesc = $_POST["project_desc"];
             $projectStatus = $_POST["project_status"];
@@ -403,11 +374,9 @@ class Project
             }
 
             if ($projectId !== null) {
-                // Editing existing project
                 $projectSave = $this->updateProject($projectId, $projectName, $projectDesc, $ownerId, $projectStatus);
                 $messagePrefix = "szerkesztve";
             } else {
-                // Creating new project
                 $projectSave = $this->saveProject($projectName, $projectDesc, $ownerId, $projectStatus);
                 $messagePrefix = "létrehozva";
             }
@@ -416,8 +385,7 @@ class Project
                 echo '<div class="alert alert-success" role="alert">A(z) <strong>' . htmlspecialchars($projectName, ENT_QUOTES, 'UTF-8') . '</strong> projekt sikeresen ' . $messagePrefix . '!</div>';
             }
         } else {
-            // Display form
-            $currvals = array(
+            $currvals = [
                 "%%project_name%%" => isset($projectDetails) ? htmlspecialchars($projectDetails[0]['project_title'], ENT_QUOTES, 'UTF-8') : "",
                 "%%project_desc%%" => isset($projectDetails) ? htmlspecialchars($projectDetails[0]['project_description'], ENT_QUOTES, 'UTF-8') : "",
                 "%%owner_name%%" => isset($projectDetails) ? htmlspecialchars($projectDetails[0]['owner_name'], ENT_QUOTES, 'UTF-8') : "",
@@ -425,7 +393,7 @@ class Project
                 "%%project_status-1%%" => (isset($projectDetails) && $projectDetails[0]['status_id'] == 1) ? ' selected ' : '',
                 "%%project_status-2%%" => (isset($projectDetails) && $projectDetails[0]['status_id'] == 2) ? ' selected ' : '',
                 "%%project_status-3%%" => (isset($projectDetails) && $projectDetails[0]['status_id'] == 3) ? ' selected ' : ''
-            );
+            ];
             $template = file_get_contents('template/project.html');
             $template = str_replace(array_keys($currvals), array_values($currvals), $template);
             echo $template;
@@ -436,15 +404,15 @@ class Project
     {
         $projectdel = $this->deleteProject($projectId);
         if ($projectdel) {
-            $response = array(
+            $response = [
                 'success' => true,
                 'message' => '<div class="alert alert-success" role="alert">A projekt törlése sikeres!</div>'
-            );
+            ];
         } else {
-            $response = array(
+            $response = [
                 'success' => false,
                 'message' => '<div class="alert alert-danger" role="alert">A projekt törlése sikertelen!</div>'
-            );
+            ];
         }
         header('Content-Type: application/json');
         echo json_encode($response);
@@ -453,4 +421,3 @@ class Project
 }
 
 ?>
-
