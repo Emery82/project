@@ -6,7 +6,7 @@ class Project
 
     public function __construct($conn)
     {
-        $this->conn = $conn;
+        $this->conn = $conn;        
     }
 
     private function getProjects($projectId = null, $params = [])
@@ -284,26 +284,20 @@ class Project
 
         $projectStatuses = $projectarrays['projectStatuses'];
 
-        $projectList_html = '
-                <div class="row">
-                    <div class="col-md-12">
-                        <h3>Projektek</h3>
-                    </div>
-                    <div class="col-md-12">                                
-                        
-                        <form method="get" action="" class="form-control">
-                        <select name="listStatus">
-                            <option value="">Szűrés státuszra</option>';
+        // Generate status options
+        $statusOptions = '';
         foreach ($projectStatuses as $key => $value) {
-            $projectList_html .= '<option value="' . $key . '" ' . (isset($params['qstatus']) && $params['qstatus'] == $key ? " selected " : "") . '>' . htmlspecialchars($value, ENT_QUOTES, 'UTF-8') . '</option>';
+            $statusOptions .= '<option value="' . $key . '" ' . (isset($params['qstatus']) && $params['qstatus'] == $key ? " selected " : "") . '>' . htmlspecialchars($value, ENT_QUOTES, 'UTF-8') . '</option>';
         }
 
-        $projectList_html .= '</select>
-                        <button class="btn btn-sm btn-secondary">OK</button>
-                        </form>
-                    </div>
-                </div>
-            ';
+        // Define replacements
+        $replacements = [
+            'status_options' => $statusOptions,
+        ];
+
+        // Import and replace placeholders
+        $projectList_html = $this->importAndReplace('template/project_list_header.php', $replacements);
+
 
         $page = isset($params['page']) ? $params['page'] : 1;
         $limit = $config['projectsperpage'];
@@ -323,25 +317,18 @@ class Project
         }
         $projectList_html .= '<div id="formmessage"></div>';
         foreach (array_slice($projects, $offset, $limit) as $project) {
-            $projectList_html .= '
-                    <div class="projectbox" id="project-' . $project['project_id'] . '">
-                        <div class="row">
-                            <div class="projectleft col-md-8"> 
-                                <h4>' . htmlspecialchars($project['project_title'], ENT_QUOTES, 'UTF-8') . '</h4>
-                                <small class="projectowner">' . htmlspecialchars($project['owner_name'], ENT_QUOTES, 'UTF-8') . ' (' . htmlspecialchars($project['owner_email'], ENT_QUOTES, 'UTF-8') . ')</small>
-                                <div class="projectbuttons">
-                                    <a href="/?projectedit=' . $project['project_id'] . '" class="btn btn-primary">Szerkesztés</a>
-                                    <!-- a href="/?projectdel=' . $project['project_id'] . '" class="btn btn-danger">Törlés</a -->
-                                    <a href="javascript:void(0);" onclick="deleteProject(' . $project['project_id'] . ')" class="btn btn-danger">Törlés</a>
+            // Define replacements
+            $replacements = [
+                'project_id' => $project['project_id'],
+                'project_title' => htmlspecialchars($project['project_title'], ENT_QUOTES, 'UTF-8'),
+                'owner_name' => htmlspecialchars($project['owner_name'], ENT_QUOTES, 'UTF-8'),
+                'owner_email' => htmlspecialchars($project['owner_email'], ENT_QUOTES, 'UTF-8'),
+                'status_name' => htmlspecialchars($project['status_name'], ENT_QUOTES, 'UTF-8'),
+            ];
 
-                                </div>
-                            </div>
-                            <div class="projectright col-md-4">
-                                <small class="prjectstatus">' . htmlspecialchars($project['status_name'], ENT_QUOTES, 'UTF-8') . '</small>      
-                                
-                            </div>
-                        </div>
-                    </div>';
+            // Import and replace placeholders
+            $projectList_html .= $this->importAndReplace('template/project_template.php', $replacements);
+
         }
         echo $projectList_html . $pagination;
     }
@@ -417,6 +404,23 @@ class Project
         header('Content-Type: application/json');
         echo json_encode($response);
         exit;
+    }
+
+    private function importAndReplace($filePath, $replacements) {
+        // Check if the file exists
+        if (!file_exists($filePath)) {
+            throw new Exception("File '$filePath' not found.");
+        }
+    
+        // Read the content of the file
+        $content = file_get_contents($filePath);
+    
+        // Replace placeholders with provided values
+        foreach ($replacements as $placeholder => $replacement) {
+            $content = str_replace("%$placeholder%", $replacement, $content);
+        }
+    
+        return $content;
     }
 }
 
