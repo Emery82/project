@@ -317,7 +317,7 @@ class Project
             $pagination .= '</ul>';
         }
 
-        $projectList_html .= '<div id="formmessage"></div>';
+        //$projectList_html .= '<div id="formmessage"></div>';
         foreach (array_slice($projects, $offset, $limit) as $project) {
             // Define replacements
             $replacements = [
