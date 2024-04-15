@@ -319,7 +319,7 @@ class Project
         foreach (array_slice($projects, $offset, $limit) as $project) {
             // Define replacements
             $replacements = [
-                'project_id' => $project['project_id'],
+                'project_id' => htmlspecialchars($project['project_id']),
                 'project_title' => htmlspecialchars($project['project_title'], ENT_QUOTES, 'UTF-8'),
                 'owner_name' => htmlspecialchars($project['owner_name'], ENT_QUOTES, 'UTF-8'),
                 'owner_email' => htmlspecialchars($project['owner_email'], ENT_QUOTES, 'UTF-8'),
