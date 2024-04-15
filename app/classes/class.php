@@ -287,7 +287,7 @@ class Project
         // Generate status options
         $statusOptions = '';
         foreach ($projectStatuses as $key => $value) {
-            $statusOptions .= '<option value="' . $key . '" ' . (isset($params['qstatus']) && $params['qstatus'] == $key ? " selected " : "") . '>' . htmlspecialchars($value, ENT_QUOTES, 'UTF-8') . '</option>';
+            $statusOptions .= '<option value="' . htmlspecialchars($key, ENT_QUOTES, 'UTF-8') . '" ' . (isset($params['qstatus']) && $params['qstatus'] == $key ? " selected " : "") . '>' . htmlspecialchars($value, ENT_QUOTES, 'UTF-8') . '</option>';
         }
 
         // Define replacements
@@ -317,7 +317,7 @@ class Project
             $pagination .= '</ul>';
         }
 
-        //$projectList_html .= '<div id="formmessage"></div>';
+        $projectList_html .= '<div id="formmessage"></div>';
         foreach (array_slice($projects, $offset, $limit) as $project) {
             // Define replacements
             $replacements = [
