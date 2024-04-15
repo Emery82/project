@@ -6,10 +6,10 @@ function deleteProject(projectId) {
                 var response = JSON.parse(this.responseText);
                 if (response.success) {
                     document.getElementById('project-' + projectId).remove();
-                    document.getElementById('formmessage').innerHTML = response.message;
+                    document.getElementById('formmessage').innerHTML = 'Projekt törölve!';
                     //alert(response.message);
                 } else {
-                    document.getElementById('formmessage').innerHTML = response.message;
+                    document.getElementById('formmessage').innerHTML = 'Projekt törlés sikertelen.';
                     //alert(response.message);
                 }
             }
