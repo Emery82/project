@@ -311,7 +311,7 @@ class Project
             $pagination .= '<ul class="pagination">';
             for ($i = 1; $i <= $totalPages; $i++) {
                 $active = $i == $currentPage ? 'active' : '';
-                $pagination .= '<li class="page-item ' . $active . '"><a class="page-link" href="?page=' . $i . '">' . $i . '</a></li>';
+                $pagination .= '<li class="page-item ' . htmlspecialchars($active) . '"><a class="page-link" href="?page=' . htmlspecialchars($i) . '">' . htmlspecialchars($i) . '</a></li>';
             }
             $pagination .= '</ul>';
         }
