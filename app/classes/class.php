@@ -63,14 +63,14 @@ class Project
         if ($result) {
             while ($row = $result->fetch_assoc()) {
                 $project = [
-                    'project_id' => $row['project_id'],
-                    'project_title' => $row['project_title'],
-                    'project_description' => $row['project_description'],
-                    'owner_id' => $row['owner_id'],
-                    'owner_name' => $row['owner_name'],
-                    'owner_email' => $row['owner_email'],
-                    'status_id' => $row['status_id'],
-                    'status_name' => $row['status_name']
+                    'project_id' => htmlspecialchars($row['project_id'], ENT_QUOTES, 'UTF-8'),
+                    'project_title' => htmlspecialchars($row['project_title'], ENT_QUOTES, 'UTF-8'),
+                    'project_description' => htmlspecialchars($row['project_description'], ENT_QUOTES, 'UTF-8'),
+                    'owner_id' => htmlspecialchars($row['owner_id'], ENT_QUOTES, 'UTF-8'),
+                    'owner_name' => htmlspecialchars($row['owner_name'], ENT_QUOTES, 'UTF-8'),
+                    'owner_email' => htmlspecialchars($row['owner_email'], ENT_QUOTES, 'UTF-8'),
+                    'status_id' => htmlspecialchars($row['status_id'], ENT_QUOTES, 'UTF-8'),
+                    'status_name' => htmlspecialchars($row['status_name'], ENT_QUOTES, 'UTF-8')
                 ];
                 $projects[] = $project;
             }
