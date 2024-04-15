@@ -421,7 +421,7 @@ class Project
     
         // Replace placeholders with provided values
         foreach ($replacements as $placeholder => $replacement) {
-            $content = str_replace("%$placeholder%", $replacement, $content);
+            $content = str_replace("%$placeholder%", htmlspecialchars($replacement, ENT_QUOTES, 'UTF-8'), $content);
         }
     
         return $content;
