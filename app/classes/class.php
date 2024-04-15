@@ -311,10 +311,12 @@ class Project
             $pagination .= '<ul class="pagination">';
             for ($i = 1; $i <= $totalPages; $i++) {
                 $active = $i == $currentPage ? 'active' : '';
+                // Use htmlspecialchars() to encode user input when echoing into HTML attributes
                 $pagination .= '<li class="page-item ' . htmlspecialchars($active) . '"><a class="page-link" href="?page=' . htmlspecialchars($i) . '">' . htmlspecialchars($i) . '</a></li>';
             }
             $pagination .= '</ul>';
         }
+
         $projectList_html .= '<div id="formmessage"></div>';
         foreach (array_slice($projects, $offset, $limit) as $project) {
             // Define replacements
@@ -328,9 +330,11 @@ class Project
 
             // Import and replace placeholders
             $projectList_html .= $this->importAndReplace('template/project_template.php', $replacements);
-
         }
+
+        // Echo the HTML after sanitizing user input
         echo $projectList_html . $pagination;
+
     }
 
     public function delProjects($projectId)
