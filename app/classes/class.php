@@ -298,7 +298,6 @@ class Project
         // Import and replace placeholders
         $projectList_html = $this->importAndReplace('template/project_list_header.php', $replacements);
 
-
         $page = isset($params['page']) ? $params['page'] : 1;
         $limit = $config['projectsperpage'];
         $offset = ($page - 1) * $limit;
