@@ -332,7 +332,7 @@ class Project
         }
 
         // Echo the HTML after sanitizing user input
-        echo $projectList_html . $pagination;
+        echo htmlentities($projectList_html . $pagination, ENT_QUOTES, 'UTF-8');
 
     }
 
